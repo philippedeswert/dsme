@@ -105,7 +105,7 @@ void signal_handler(int sig)
 }
 
 #ifdef DSME_LOG_ENABLE
-static int        logging_verbosity = LOG_INFO;
+static int        logging_verbosity = LOG_NOTICE;
 static log_method logging_method    = LOG_METHOD_SYSLOG;
 #endif
 #ifdef DSME_SYSTEMD_ENABLE
@@ -260,8 +260,6 @@ int main(int argc, char *argv[])
   if (setpriority(PRIO_PROCESS, 0, DSME_PRIORITY) != 0) {
       fprintf(stderr, ME "Couldn't set dynamic priority: %s\n", strerror(errno));
   }
-
-  g_thread_init(0); /* notice that this spawns a thread */
 
   parse_options(argc, argv, &module_names);
 

@@ -31,6 +31,7 @@
 #include "dsme/logging.h"
 #include "dsme/modules.h"
 #include "dsme/modulebase.h"
+#include "dsme/state.h"
 
 #include <glib.h>
 #include <dbus/dbus.h>
@@ -82,11 +83,69 @@ static bool dsme_dbus_check_arg_type(DBusMessageIter* iter, int want_type)
     return false;
 }
 
-bool dsme_dbus_is_available(void)
+static DBusHandlerResult
+dsme_dbus_filter(DBusConnection *con, DBusMessage *msg, void *aptr)
 {
-    return dbus_bus_get(DBUS_BUS_SYSTEM, 0) != 0;
+    FILE* f;
+
+    if( dbus_message_is_signal(msg, DBUS_INTERFACE_LOCAL, "Disconnected") ) {
+      dsme_log(LOG_CRIT, "Disconnected from system bus; rebooting");
+      /* mark failure and request reboot */
+      if ((f = fopen(DBUS_FAILED_FILE, "w+")) != NULL)
+	  fclose(f);
+      DSM_MSGTYPE_REBOOT_REQ req = DSME_MSG_INIT(DSM_MSGTYPE_REBOOT_REQ);
+      broadcast_internally(&req);
+    }
+    return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
+static DBusConnection *dsme_dbus_try_to_connect(DBusError *err)
+{
+    static DBusConnection *con = 0;
+
+    if( con )
+	goto EXIT;
+
+    if( !(con = dbus_bus_get(DBUS_BUS_SYSTEM, err)) )
+	goto EXIT;
+
+    dbus_connection_add_filter(con, dsme_dbus_filter, 0, 0);
+    dbus_connection_set_exit_on_disconnect(con, FALSE);
+
+EXIT:
+    // NOTE: returns null or new reference
+    return con ? dbus_connection_ref(con) : 0;
+}
+
+DBusConnection *dsme_dbus_get_connection(DBusError *error)
+{
+    DBusError       err = DBUS_ERROR_INIT;
+    DBusConnection *con = dsme_dbus_try_to_connect(&err);
+
+    if( !con ) {
+	if( error )
+	    dbus_move_error(&err, error);
+	else
+	    dsme_log(LOG_DEBUG, "dbus_bus_get(): %s\n", err.message);
+    }
+    dbus_error_free(&err);
+
+    // NOTE: returns null or new reference
+    return con;
+}
+
+bool dsme_dbus_is_available(void)
+{
+    bool            res = false;
+    DBusConnection *con = 0;
+
+    if( (con = dsme_dbus_try_to_connect(0)) ) {
+	dbus_connection_unref(con);
+	res = true;
+    }
+
+    return res;
+}
 
 struct DsmeDbusMessage {
   DBusConnection* connection;
@@ -194,18 +253,6 @@ static void message_send_and_delete(DsmeDbusMessage* msg)
 }
 
 
-static DBusConnection* system_bus(DBusError* error)
-{
-  DBusConnection* connection;
-
-  if (!(connection = dbus_bus_get(DBUS_BUS_SYSTEM, error))) {
-    dsme_log(LOG_DEBUG, "dbus_bus_get(): %s\n", error->message);
-    dbus_error_free(error);
-  }
-
-  return connection;
-}
-
 DsmeDbusMessage* dsme_dbus_signal_new(const char* path,
                                       const char* interface,
                                       const char* name)
@@ -218,7 +265,7 @@ DsmeDbusMessage* dsme_dbus_signal_new(const char* path,
       dbus_error_init(&error);
 
       // TODO: we only use the system bus
-      if ((connection = system_bus(&error))) {
+      if ((connection = dsme_dbus_get_connection(&error))) {
           s = g_new(DsmeDbusMessage, 1);
 
           s->connection = connection;
@@ -226,6 +273,7 @@ DsmeDbusMessage* dsme_dbus_signal_new(const char* path,
 
           dbus_message_iter_init_append(s->msg, &s->iter);
       }
+      dbus_error_free(&error);
   }
 
   return s;
@@ -460,15 +508,19 @@ static bool dispatcher_list_dispatch(const DispatcherList* list,
                                      DBusMessage*          msg)
 {
   bool          dispatched = false;
+  int           msg_type   = dbus_message_get_type(msg);
   Dispatcher*   d          = 0;
   const GSList* i;
-
   for (i = list->dispatchers; i; i = g_slist_next(i)) {
     d = i->data;
     if (d->can_dispatch(d, msg)) {
         d->dispatch(d, connection, msg);
         dispatched = true;
-        break; // TODO: we only dispatch one method
+
+        /* Method calls should have only one handler.
+	 * Stop after suitable one has been found. */
+        if( msg_type == DBUS_MESSAGE_TYPE_METHOD_CALL )
+           break;
     }
   }
 
@@ -491,15 +543,10 @@ static bool filter_handle_message(Filter* filter, DBusMessage* msg)
   switch (dbus_message_get_type(msg)) {
 
   case DBUS_MESSAGE_TYPE_METHOD_CALL:
-    //dsme_log(LOG_DEBUG, "D-Bus: unknown method call");
     // TODO: add logging
   break;
 
   case DBUS_MESSAGE_TYPE_SIGNAL:
-    //dsme_log(LOG_DEBUG, "D-Bus: unknown signal:");
-    //dsme_log(LOG_DEBUG, "path:   '%s'", dbus_message_get_path(msg));
-    //dsme_log(LOG_DEBUG, "if:     '%s'", dbus_message_get_interface(msg));
-    //dsme_log(LOG_DEBUG, "member: '%s'", dbus_message_get_member(msg));
   break;
 
   case DBUS_MESSAGE_TYPE_ERROR:
@@ -538,7 +585,12 @@ static DBusHandlerResult filter_static_message_handler(
   if (filter->handler(filter->child, connection, msg) ||
       filter_handle_message(filter, msg))
   {
+    /* It is ok to have multiple handlers for signals etc.
+     * Only method calls should be marked as "handled" */
+    if( dbus_message_get_type(msg) == DBUS_MESSAGE_TYPE_METHOD_CALL )
+    {
       result = DBUS_HANDLER_RESULT_HANDLED;
+    }
   }
 
   return result;
@@ -553,8 +605,8 @@ static Filter* filter_new(void* child, FilterMessageHandler* handler)
   dbus_error_init(&error);
 
   // TODO: we only use the system bus
-  if ((connection = system_bus(&error)) == 0) {
-    dsme_log(LOG_ERR, "system_bus() failed: %s", error.message);
+  if ((connection = dsme_dbus_get_connection(&error)) == 0) {
+    dsme_log(LOG_ERR, "system bus connect failed: %s", error.message);
     dbus_error_free(&error);
   } else {
 
@@ -602,7 +654,6 @@ static bool service_handle_message(gpointer        servicep,
   bool      handled = false;
 
   if (dbus_message_get_type(msg) == DBUS_MESSAGE_TYPE_METHOD_CALL) {
-    //dsme_log(LOG_DEBUG, "D-Bus: method call");
     handled = dispatcher_list_dispatch(service->methods, connection, msg);
   }
 
@@ -720,7 +771,6 @@ static bool client_handle_message(gpointer        clientp,
   bool    handled = false;
 
   if (dbus_message_get_type(msg) == DBUS_MESSAGE_TYPE_SIGNAL) {
-    //dsme_log(LOG_DEBUG, "D-Bus: signal");
     handled = dispatcher_list_dispatch(client->handlers, connection, msg);
   }
 

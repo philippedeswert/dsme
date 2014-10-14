@@ -97,12 +97,12 @@ static module_t* load_state_module(const char*  bootstate,
                                    dsme_state_t expected_state)
 {
   module_t* module;
-  gchar* module_name = g_strconcat(dsme_module_path, "state.so", NULL);
+  gchar* module_name_tmp = g_strconcat(dsme_module_path, "state.so", NULL);
 
   setenv("BOOTSTATE", bootstate, true);
-  module = load_module_under_test(module_name);
+  module = load_module_under_test(module_name_tmp);
   unsetenv("BOOTSTATE");
-  g_free(module_name);
+  g_free(module_name_tmp);
 
   DSM_MSGTYPE_STATE_CHANGE_IND* ind;
   assert((ind = queued(DSM_MSGTYPE_STATE_CHANGE_IND)));
@@ -642,9 +642,9 @@ static void testcase16(void)
   module_t* state = load_state_module("USER", DSME_STATE_USER);
   assert(!timer_exists());
 
-  DSM_MSGTYPE_SET_THERMAL_STATE msg =
-      TEST_MSG_INIT(DSM_MSGTYPE_SET_THERMAL_STATE);
-  msg.overheated = true;
+  DSM_MSGTYPE_SET_THERMAL_STATUS msg =
+      TEST_MSG_INIT(DSM_MSGTYPE_SET_THERMAL_STATUS);
+  msg.status = DSM_THERMAL_STATUS_OVERHEATED;
   send_message(state, &msg);
 
   assert(message_queue_is_empty());
@@ -666,18 +666,18 @@ static void testcase17(void)
   assert(!timer_exists());
 
   // overheat
-  DSM_MSGTYPE_SET_THERMAL_STATE msg =
-      TEST_MSG_INIT(DSM_MSGTYPE_SET_THERMAL_STATE);
-  msg.overheated = true;
+  DSM_MSGTYPE_SET_THERMAL_STATUS msg =
+      TEST_MSG_INIT(DSM_MSGTYPE_SET_THERMAL_STATUS);
+  msg.status = DSM_THERMAL_STATUS_OVERHEATED;
   send_message(state, &msg);
 
   assert(message_queue_is_empty());
   assert(timer_exists());
 
   // cool down
-  DSM_MSGTYPE_SET_THERMAL_STATE msg2 =
-      TEST_MSG_INIT(DSM_MSGTYPE_SET_THERMAL_STATE);
-  msg2.overheated = false;
+  DSM_MSGTYPE_SET_THERMAL_STATUS msg2 =
+      TEST_MSG_INIT(DSM_MSGTYPE_SET_THERMAL_STATUS);
+  msg2.status = DSM_THERMAL_STATUS_NORMAL;
   send_message(state, &msg2);
 
   assert(message_queue_is_empty());
@@ -758,10 +758,10 @@ static void testcase19(void)
 static void testcase20(void)
 {
   /* weird $BOOTSTATE cases */
-  gchar* module_name = g_strconcat(dsme_module_path, "state.so", NULL);
+  gchar* module_name_tmp = g_strconcat(dsme_module_path, "state.so", NULL);
 
   // do not specify $BOOTSTATE
-  module_t* state = load_module_under_test(module_name);
+  module_t* state = load_module_under_test(module_name_tmp);
   DSM_MSGTYPE_STATE_CHANGE_IND* ind;
   assert(ind = queued(DSM_MSGTYPE_STATE_CHANGE_IND));
   assert(ind->state == DSME_STATE_USER);
@@ -782,39 +782,39 @@ static void testcase20(void)
 
   // specify SHUTDOWN
   setenv("BOOTSTATE", "SHUTDOWN", true);
-  state = load_module_under_test(module_name);
+  state = load_module_under_test(module_name_tmp);
   unsetenv("BOOTSTATE");
   expect_shutdown(state);
   unload_module_under_test(state);
 
   // specify SHUTDOWN
   setenv("BOOTSTATE", "SHUTDOWN", true);
-  state = load_module_under_test(module_name);
+  state = load_module_under_test(module_name_tmp);
   unsetenv("BOOTSTATE");
   expect_shutdown(state);
   unload_module_under_test(state);
 
   // specify BOOT
   setenv("BOOTSTATE", "BOOT", true);
-  state = load_module_under_test(module_name);
+  state = load_module_under_test(module_name_tmp);
   unsetenv("BOOTSTATE");
   expect_reboot(state);
   unload_module_under_test(state);
 
-  g_free(module_name);
+  g_free(module_name_tmp);
 }
 
 static void testcase21(void)
 {
   /* non-rd_mode cases and cal problems */
 
-  gchar* module_name = g_strconcat(dsme_module_path, "state.so", NULL);
+  gchar* module_name_tmp = g_strconcat(dsme_module_path, "state.so", NULL);
 
   // non-rd_mode
   rd_mode = "";
   unsetenv("DSME_RD_FLAGS_ENV");
   setenv("BOOTSTATE", "DIIBADAABA", true);
-  module_t* state = load_module_under_test(module_name);
+  module_t* state = load_module_under_test(module_name_tmp);
   unsetenv("BOOTSTATE");
   DSM_MSGTYPE_STATE_CHANGE_IND* ind;
   assert(ind = queued(DSM_MSGTYPE_STATE_CHANGE_IND));
@@ -832,7 +832,7 @@ static void testcase21(void)
   // cal problem
   rd_mode = 0;
   setenv("BOOTSTATE", "DIIBADAABA", true);
-  state = load_module_under_test(module_name);
+  state = load_module_under_test(module_name_tmp);
   unsetenv("BOOTSTATE");
   assert(ind = queued(DSM_MSGTYPE_STATE_CHANGE_IND));
   assert(ind->state == DSME_STATE_USER);
@@ -845,7 +845,7 @@ static void testcase21(void)
   assert(!timer_exists());
   unload_module_under_test(state);
 
-  g_free(module_name);
+  g_free(module_name_tmp);
 }
 
 static void testcase22(void)
@@ -867,9 +867,9 @@ static void testcase23(void)
   module_t* state = load_state_module("USER", DSME_STATE_USER);
   assert(!timer_exists());
 
-  DSM_MSGTYPE_SET_THERMAL_STATE msg =
-      TEST_MSG_INIT(DSM_MSGTYPE_SET_THERMAL_STATE);
-  msg.overheated = true;
+  DSM_MSGTYPE_SET_THERMAL_STATUS msg =
+      TEST_MSG_INIT(DSM_MSGTYPE_SET_THERMAL_STATUS);
+  msg.status = DSM_THERMAL_STATUS_OVERHEATED;
   send_message(state, &msg);
 
   DSM_MSGTYPE_STATE_CHANGE_IND* ind2;

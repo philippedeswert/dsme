@@ -27,7 +27,10 @@
 #include "dsme/timers.h"
 #include <stdbool.h>
 
+#define INVALID_TEMPERATURE -9999
+
 typedef enum {
+  THERMAL_STATUS_LOW,
   THERMAL_STATUS_NORMAL,
   THERMAL_STATUS_WARNING,
   THERMAL_STATUS_ALERT,
@@ -59,6 +62,8 @@ typedef struct thermal_object_configuration_t {
 struct thermal_object_t {
   thermal_object_configuration_t* conf;
   THERMAL_STATUS                  status;
+  THERMAL_STATUS                  new_status;
+  int                             status_change_count;
   bool                            request_pending;
 };
 

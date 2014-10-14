@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <sys/syslog.h>
 #include <sys/socket.h>
@@ -68,7 +69,7 @@ static struct {
 
 
 #define DSME_MAX_LOG_MESSAGE_LENGTH 123
-#define DSME_MAX_LOG_BUFFER_ENTRIES  64 /* must be a power of 2! */
+#define DSME_MAX_LOG_BUFFER_ENTRIES 128 /* must be a power of 2! */
 
 typedef struct log_entry {
     int  prio;
@@ -257,37 +258,53 @@ static void log_to_file(int prio, const char* message)
  */
 void dsme_log_txt(int level, const char* fmt, ...)
 {
-    va_list         ap;
+    static bool     overflow = false;
+    static unsigned skipped  = 0;
 
+    log_entry* entry;
+
+    /* Do verbosity filtering first */
+    if( logopt.verbosity < level )
+	goto EXIT;
+
+    /* Handle ring buffer overflows */
+    unsigned buffered = write_count - read_count;
+
+    if( buffered >= DSME_MAX_LOG_BUFFER_ENTRIES ) {
+	overflow = true;
+	++skipped;
+	goto EXIT;
+    }
+
+    if( overflow ) {
+	/* must go down enough before overflow is cleared */
+	if( buffered >= DSME_MAX_LOG_BUFFER_ENTRIES * 7 / 8 ) {
+	    ++skipped;
+	    goto EXIT;
+	}
+
+	/* Add log entry about the overflow itself */
+        entry = &ring_buffer[write_count++ % DSME_MAX_LOG_BUFFER_ENTRIES];
+        entry->prio = LOG_ERR;
+        snprintf(entry->message, sizeof entry->message,
+		 "logging ringbuffer overflow; %u messages lost", skipped);
+	sem_post(&ring_buffer_sem);
+
+	overflow = false;
+	skipped = 0;
+    }
+
+    /* Add log entry to the ring buffer */
+    entry = &ring_buffer[write_count++ % DSME_MAX_LOG_BUFFER_ENTRIES];
+    entry->prio = level;
+    va_list ap;
     va_start(ap, fmt);
-
-    if (logopt.verbosity >= level) {
-        /* buffer for the logging thread to log */
-        log_entry* entry =
-            &ring_buffer[write_count % DSME_MAX_LOG_BUFFER_ENTRIES];
-
-        entry->prio = level;
-        vsnprintf(entry->message,
-                  DSME_MAX_LOG_MESSAGE_LENGTH + 1,
-                  fmt,
-                  ap);
-        entry->message[DSME_MAX_LOG_MESSAGE_LENGTH] = '\0';
-
-        ++write_count;
-
-        /* wake up the logging thread */
-        sem_post(&ring_buffer_sem);
-    }
-
-#if 0 /* spam the console */
-    /* always output significant messages to console */
-    if (level <= LOG_NOTICE) {
-        vfprintf(stderr, fmt, ap);
-        fprintf(stderr, "\n");
-    }
-#endif
-
+    vsnprintf(entry->message, sizeof entry->message, fmt, ap);
     va_end(ap);
+    sem_post(&ring_buffer_sem);
+
+EXIT:
+    return;
 }
 
 /*
@@ -494,40 +511,53 @@ void dsme_log_stop(void)
     thread_enabled = 0;
 }
 
+static char *pid2exe(pid_t pid)
+{
+    char *res = 0;
+    int   fd  = -1;
+    int   rc;
+    char  path[128];
+    char  temp[128];
+
+    snprintf(path, sizeof path, "/proc/%ld/cmdline", (long)pid);
+
+    if( (fd = open(path, O_RDONLY)) == -1 )
+	goto EXIT;
+
+    if( (rc = read(fd, temp, sizeof temp - 1)) <= 0 )
+	goto EXIT;
+
+    temp[rc] = 0;
+    res = strdup(temp);
+
+EXIT:
+    if( fd != -1 ) close(fd);
+
+    return res;
+}
+
 char* pid2text(pid_t pid)
 {
-    char* str;
-    int ret = -1;
-    if (pid == 0)
-        return strdup("<internal>");
-    if (logopt.verbosity == LOG_DEBUG)
-    {
-        char* path = 0;
-        if (asprintf(&path, "/proc/%ld/cmdline", (long)pid) != -1)
-        {
-            FILE* file = fopen(path, "r");
-            if (file != NULL)
-            {
-                char* proc = NULL;
-                int ret2;
+    static unsigned id = 0;
 
-                ret2 = fscanf(file, "%ms", &proc);
-                if (ret2 == 1)
-                {
-                    ret = asprintf(&str, "%ld (%s)", (long)pid, proc);
-                    if (proc)
-                        free(proc);
-                }
-                fclose(file);
-            }
-            free(path);
-        }
+    char *str = 0;
+    char *exe = 0;
+
+    if( pid == 0 ) {
+	str = strdup("<internal>");
+	goto EXIT;
     }
-    else
-    {
-        ret = asprintf(&str, "%ld", (long)pid);
-    }
-    return (ret > -1 ? str : strdup("<error>"));
+
+    exe = pid2exe(pid);
+
+    if( asprintf(&str, "external-%u/%ld (%s)", ++id,
+		 (long)pid, exe ?: "unknown") < 0 )
+	str = 0;
+
+EXIT:
+    free(exe);
+
+    return str ?: strdup("error");
 }
 
 #endif /* DSME_LOG_ENABLE */

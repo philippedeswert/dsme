@@ -82,8 +82,17 @@ const char *modules[] = {
     "iphb.so",
     "processwd.so",
     "alarmtracker.so",
+#ifdef DSME_BOOTREASON_LOGGER
+    "bootreasonlogger.so",
+#endif
+#ifdef DSME_BATTERY_TRACKER
+    "batterytracker.so",
+#endif
     "thermalflagger.so",
     "thermalmanager.so",
+#ifdef DSME_HW_THERMAL_MGMT
+    "thermalobject_hw.so",
+#endif
 #ifdef DSME_MEMORY_THERMAL_MGMT
     "thermalobject_memory.so",
 #endif
@@ -99,10 +108,15 @@ const char *modules[] = {
     "validatorlistener.so",
 #endif
     "diskmonitor.so",
+#ifdef DSME_TEMPREAPER
     "tempreaper.so",
+#endif
     "dbusautoconnector.so",
 #ifdef DSME_PWRKEY_MONITOR
     "pwrkeymonitor.so",
+#endif
+#ifdef DSME_VIBRA_FEEDBACK
+    "shutdownfeedback.so",
 #endif
     NULL
 };

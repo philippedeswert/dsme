@@ -1,3 +1,75 @@
+dsme (0.66.4) unstable; urgency=low
+
+  * [dsme] Block suspend for 60 seconds if dsme makes abnormal exit. Fixes
+    JB#16301
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Wed, 23 Apr 2014 09:29:29 +0300
+
+dsme (0.66.0) unstable; urgency=low
+
+  * [iphb] Handle iphb wait requests with 32bit time ranges. Contributes to JB#16116
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Mon, 24 Mar 2014 12:50:51 +0200
+
+dsme (0.65.2) unstable; urgency=low
+
+  * [dsme] Do not allow uninterruptible dsme-server to block dsme exit. Fixes JB#17021
+  * [dsme] Add error handling to glib io watches. Fixes JB#17046
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Fri, 14 Mar 2014 10:28:21 +0200
+
+dsme (0.64.6) unstable; urgency=low
+
+  * [dsme] Clear watchdog nowayout state if dsme makes normal exit
+  * [iphb] Do not complain about missing /dev/iphb by default
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Fri, 31 Jan 2014 15:07:18 +0200
+
+dsme (0.64.3) unstable; urgency=low
+
+  * [iphb] Do not modify RTC time while dsme is running
+  * [iphb] Sync RTC and system time on dsme startup/exit
+  * [iphb] Do not apply obviously wrong RTC time as system time
+  * [iphb] Cache alarm queue state over dsme/device restarts
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Thu, 12 Dec 2013 14:16:20 +0200
+
+dsme (0.64.0) unstable; urgency=low
+
+  * [iphb] Allow internal wakeups to resume from suspend
+  * [dsme] Enforce battery level checks when battery is getting empty
+  * [iphb] Limit continuous suspend time to maximum of 30 minutes
+  * [dsme] Allow battery level config file to define also wakeup parameter
+  * [dsme] Change battery empty shutdown limit to 3%
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Fri, 22 Nov 2013 11:02:00 +0200
+
+dsme (0.63.7) precise; urgency=low
+
+  * [service] Add EnvironmentFile to allow easy configuration of dsme
+  * [dsme] Handle DBus disconnects gracefully
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Wed, 20 Nov 2013 09:35:41 +0200
+
+dsme (0.63.3) unstable; urgency=low
+
+  * [iphb] Do not close /dev/alarm before the final rtc wakeup programming
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Fri, 25 Oct 2013 12:03:54 +0300
+
+dsme (0.62.23) unstable; urgency=low
+
+  * [iphb] Prefer ANDROID_ALARM_ELAPSED_REALTIME over CLOCK_MONOTONIC
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Thu, 10 Oct 2013 18:18:13 +0300
+
+dsme (0.62.21) unstable; urgency=low
+
+  * [iphb] Fix evaluation of the next rtc wakeup time
+  * [iphb] Use /dev/alarm for scheduling rtc wakeups
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Wed, 09 Oct 2013 13:27:37 +0300
+
 dsme (0.62.1) unstable; urgency=low
 
   [Simo Piiroinen]

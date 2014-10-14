@@ -26,6 +26,10 @@
 #define DSME_DBUS_H
 
 #include <stdbool.h>
+#include <dbus/dbus.h>
+
+
+#define DBUS_FAILED_FILE "/run/systemd/boot-status/dbus-failed"
 
 typedef struct DsmeDbusMessage DsmeDbusMessage;
 
@@ -47,6 +51,7 @@ typedef struct dsme_dbus_signal_binding_t {
 
 
 bool dsme_dbus_is_available(void);
+DBusConnection *dsme_dbus_get_connection(DBusError *err);
 
 void dsme_dbus_bind_methods(bool*                      bound_already,
                             const dsme_dbus_binding_t* bindings,
@@ -70,13 +75,6 @@ DsmeDbusMessage* dsme_dbus_signal_new(const char* path,
                                       const char* interface,
                                       const char* name);
 
-#if 0
-DsmeDbusMessage* dsme_dbus_call_new(const char* destination,
-                                    const char* path,
-                                    const char* interface,
-                                    const char* method);
-#endif
-
 void dsme_dbus_message_append_string(DsmeDbusMessage* msg, const char* s);
 void dsme_dbus_message_append_int(DsmeDbusMessage* msg, int i);
 
@@ -86,10 +84,6 @@ bool        dsme_dbus_message_get_bool(const DsmeDbusMessage* msg);
 
 // NOTE: frees the signal; hence not const
 void dsme_dbus_signal_emit(DsmeDbusMessage* sig);
-
-#if 0
-void dsme_dbus_call(DsmeDbusMessage* call, DsmeDbusHandler* handler);
-#endif
 
 char* dsme_dbus_endpoint_name(const DsmeDbusMessage* request);
 

@@ -1,5 +1,5 @@
 # Package name and version
-AC_INIT(dsme, 0.62.10)
+AC_INIT(dsme, 0.66.10)
 
 AM_INIT_AUTOMAKE
 
@@ -105,6 +105,19 @@ AS_IF([test "x$enable_memory_thermal_mgmt" != xno],
 AM_CONDITIONAL([WANT_MEMORY_THERMAL_MGMT], [test x$enable_memory_thermal_mgmt != xno])
 
 #
+# HW thermal mgmt
+#
+AC_ARG_ENABLE([hw-thermal-mgmt],
+  [AS_HELP_STRING([--disable-hw-thermal-mgmt],
+    [disable hw thermal management (libthermalobject_hw)])],
+  [],
+  [enable_hw_thermal_mgmt=yes])
+
+AS_IF([test "x$enable_hw_thermal_mgmt" != xno],
+  [AC_DEFINE([DSME_HW_THERMAL_MGMT], [1])])
+AM_CONDITIONAL([WANT_HW_THERMAL_MGMT], [test x$enable_hw_thermal_mgmt != xno])
+
+#
 # pwrkeymonitor
 #
 AC_ARG_ENABLE([pwrkeymonitor],
@@ -117,6 +130,44 @@ AS_IF([test "x$enable_pwrkeymonitor" != xno],
   [AC_DEFINE([DSME_PWRKEY_MONITOR], [1], [Enable pwrkeymonitor plugin])])
 AM_CONDITIONAL([WANT_PWRKEY_MONITOR], [test x$enable_pwrkeymonitor != xno])
 
+#
+# Battery tracker
+#
+AC_ARG_ENABLE([battery-tracker],
+  [AS_HELP_STRING([--disable-battery-tracker],
+    [disable battery tracker (libbatterytracker)])],
+  [],
+  [enable_battery_tracker=yes])
+
+AS_IF([test "x$enable_battery_tracker" != xno],
+  [AC_DEFINE([DSME_BATTERY_TRACKER], [1])])
+AM_CONDITIONAL([WANT_BATTERY_TRACKER], [test x$enable_battery_tracker != xno])
+
+#
+# Bootreason logger
+#
+AC_ARG_ENABLE([bootreason-logger],
+  [AS_HELP_STRING([--disable-bootreason-logger],
+    [disable bootreason logger (libbootreasonlogger)])],
+  [],
+  [enable_bootreason_logger=yes])
+
+AS_IF([test "x$enable_bootreason_logger" != xno],
+  [AC_DEFINE([DSME_BOOTREASON_LOGGER], [1])])
+AM_CONDITIONAL([WANT_BOOTREASON_LOGGER], [test x$enable_bootreason_logger != xno])
+
+#
+# Shutdown feedback
+#
+AC_ARG_ENABLE([vibra-feedback],
+  [AS_HELP_STRING([--disable-vibra-feedback],
+    [disable vibra feedback (libshutdownfeedback)])],
+  [],
+  [enable_vibra_feedback=yes])
+
+AS_IF([test "x$enable_vibra_feedback" != xno],
+  [AC_DEFINE([DSME_VIBRA_FEEDBACK], [1])])
+AM_CONDITIONAL([WANT_VIBRA_FEEDBACK], [test x$enable_vibra_feedback != xno])
 
 #
 # Compiler and linker flags
@@ -136,7 +187,7 @@ fi
 # FIXME: DSME_LOG_ENABLE should be proper&working configure option
 #AC_DEFINE([DSME_LOG_ENABLE], [1])
 
-AC_SUBST(C_GENFLAGS, ["-pthread -g -std=c99 -Wall -Wwrite-strings -Wmissing-prototypes -Werror"])
+AC_SUBST(C_GENFLAGS, ["-pthread -g -std=c99 -Wall -Wwrite-strings -Wmissing-prototypes -Werror -Wshadow"])
 AC_SUBST(C_OPTFLAGS, ["-O2"])
 AC_SUBST(C_DBGFLAGS, ["-g -DDEBUG -DDSME_LOG_ENABLE"])
 AC_SUBST(CPP_GENFLAGS, '-I$(top_srcdir) -I$(top_srcdir)/include')
@@ -160,6 +211,9 @@ AM_PROG_CC_C_O()
 PKG_CHECK_MODULES(GLIB, glib-2.0)
 PKG_CHECK_MODULES(DBUS, dbus-1)
 PKG_CHECK_MODULES(DBUSGLIB, dbus-glib-1)
+if test "x$enable_vibra_feedback" != xno; then
+PKG_CHECK_MODULES(LIBNGF, libngf0)
+fi
 
 # Check libs (that are not yet checked)
 # Whitespaces in 'action-if-found' fields in order to not (auto)update LIBS variable
@@ -168,7 +222,7 @@ AC_CHECK_LIB([dsme], [dsmesock_init], [AC_MSG_NOTICE([got libdsme])], AC_MSG_FAI
 
 # Check headers
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h ftw.h inttypes.h limits.h stdint.h stdlib.h \
-                  string.h strings.h sys/ioctl.h sys/socket.h sys/time.h    \
+                  string.h strings.h sys/ioctl.h sys/socket.h sys/time.h time.h   \
                   syslog.h unistd.h utmpx.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
@@ -201,6 +255,7 @@ AC_CONFIG_FILES([Makefile
                  util/Makefile
                  getbootstate/Makefile
                  test/Makefile
+                 tests/Makefile
                  dsme.init])
 
 AC_OUTPUT
