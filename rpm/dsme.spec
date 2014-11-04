@@ -1,6 +1,6 @@
 Name:       dsme
 Summary:    Device State Management Entity
-Version:    0.66.10
+Version:    0.67.1
 Release:    0
 Group:      System/System Control
 License:    LGPLv2+
@@ -11,6 +11,7 @@ Source2:    dsme-rpmlintrc
 Requires:   systemd
 Requires:   statefs
 Requires:   ngfd
+Requires:   usb-moded
 Requires(preun): systemd
 Requires(post): systemd
 Requires(postun): systemd
@@ -86,8 +87,10 @@ systemctl daemon-reload || :
 
 %files
 %defattr(-,root,root,-)
+%dir %{_libdir}/dsme
 %{_libdir}/dsme/*
 %attr(755,root,root)%{_sbindir}/*
+%dir %{_sysconfdir}/dsme/
 %config %{_sysconfdir}/dsme/lifeguard.uids
 %config %{_sysconfdir}/dbus-1/system.d/dsme.conf
 %doc debian/copyright COPYING

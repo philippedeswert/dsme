@@ -1,5 +1,5 @@
 # Package name and version
-AC_INIT(dsme, 0.66.10)
+AC_INIT(dsme, 0.67.1)
 
 AM_INIT_AUTOMAKE
 
@@ -168,6 +168,19 @@ AC_ARG_ENABLE([vibra-feedback],
 AS_IF([test "x$enable_vibra_feedback" != xno],
   [AC_DEFINE([DSME_VIBRA_FEEDBACK], [1])])
 AM_CONDITIONAL([WANT_VIBRA_FEEDBACK], [test x$enable_vibra_feedback != xno])
+
+#
+# WLAN loader
+#
+AC_ARG_ENABLE([wlanloader],
+  [AS_HELP_STRING([--disable-wlan-loader],
+    [disable wlan loader (libwlanloader)])],
+  [enable_wlan_loader=no],
+  [enable_wlan_loader=yes])
+
+AS_IF([test "x$enable_wlan_loader" != xno],
+  [AC_DEFINE([DSME_WLAN_LOADER], [1])])
+AM_CONDITIONAL([WANT_WLAN_LOADER], [test x$enable_wlan_loader != xno])
 
 #
 # Compiler and linker flags

@@ -1,3 +1,21 @@
+dsme (0.67.1) unstable; urgency=low
+
+  * [build] Add usb-moded requirement
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Tue, 14 Oct 2014 08:01:12 +0300
+
+dsme (0.66.12) unstable; urgency=low
+
+  * [dsme] Fix GCC 4.8 related build errors, Contributes to JB#22700
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Sun, 07 Sep 2014 19:17:58 +0300
+
+dsme (0.66.11) unstable; urgency=low
+  * [iphb] Work around read only rtc time by using persistently stored time
+    delta. Fixes JB#21810
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Thu, 07 Aug 2014 13:37:40 +0300
+
 dsme (0.66.4) unstable; urgency=low
 
   * [dsme] Block suspend for 60 seconds if dsme makes abnormal exit. Fixes
