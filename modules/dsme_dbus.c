@@ -28,10 +28,10 @@
 
 #include "dsme_dbus.h"
 
-#include "dsme/logging.h"
-#include "dsme/modules.h"
-#include "dsme/modulebase.h"
-#include "dsme/state.h"
+#include "../include/dsme/logging.h"
+#include "../include/dsme/modules.h"
+#include "../include/dsme/modulebase.h"
+#include <dsme/state.h>
 
 #include <glib.h>
 #include <dbus/dbus.h>
@@ -265,6 +265,16 @@ bool dsme_dbus_message_get_variant_bool(const DsmeDbusMessage* msg)
   return b;
 }
 
+const char* dsme_dbus_message_path(const DsmeDbusMessage* msg)
+{
+  if (msg && msg->msg) {
+      const char* path = dbus_message_get_path(msg->msg);
+      if (path)
+          return path;
+  }
+  return "";
+}
+
 static void message_send_and_delete(DsmeDbusMessage* msg)
 {
   // TODO: check for errors and log them
@@ -428,6 +438,8 @@ static void method_dispatcher_dispatch(const Dispatcher* dispatcher,
     dbus_connection_ref(connection), dbus_message_ref(msg)
   };
   DsmeDbusMessage* reply   = 0;
+
+  dbus_message_iter_init(msg, &request.iter);
 
   enter_module(dispatcher->module);
   dispatcher->target.method(&request, &reply);

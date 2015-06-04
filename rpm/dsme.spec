@@ -1,6 +1,6 @@
 Name:       dsme
 Summary:    Device State Management Entity
-Version:    0.67.4
+Version:    0.71.0
 Release:    0
 Group:      System/System Control
 License:    LGPLv2+
@@ -11,6 +11,7 @@ Source2:    dsme-rpmlintrc
 Requires:   systemd
 Requires:   statefs
 Requires:   ngfd
+Requires:   libdsme >= 0.63.2
 Requires(preun): systemd
 Requires(post): systemd
 Requires(postun): systemd
@@ -18,7 +19,7 @@ BuildRequires:  pkgconfig(glib-2.0) >= 2.32.0
 BuildRequires:  pkgconfig(dbus-1)
 BuildRequires:  pkgconfig(dbus-glib-1)
 BuildRequires:  pkgconfig(libiphb) >= 1.2.0
-BuildRequires:  pkgconfig(dsme) >= 0.63.0
+BuildRequires:  pkgconfig(dsme) >= 0.63.2
 BuildRequires:  pkgconfig(systemd)
 BuildRequires:  pkgconfig(mce) >= 1.12.3
 BuildRequires:  pkgconfig(libngf0) >= 0.24
@@ -52,7 +53,6 @@ chmod a+x autogen.sh
 chmod a+x configure
 
 %configure --disable-static \
-    --without-bmeipc \
     --disable-poweron-timer \
     --disable-upstart \
     --enable-runlevel \
@@ -66,6 +66,7 @@ make %{?_smp_mflags}
 rm -rf %{buildroot}
 %make_install
 
+install -D -m 644 reboot-via-dsme.sh %{buildroot}/etc/profile.d/reboot-via-dsme.sh
 install -D -m 644 %{SOURCE1} %{buildroot}/lib/systemd/system/%{name}.service
 install -d %{buildroot}/lib/systemd/system/multi-user.target.wants/
 ln -s ../%{name}.service %{buildroot}/lib/systemd/system/multi-user.target.wants/%{name}.service
@@ -97,6 +98,8 @@ systemctl daemon-reload || :
 /lib/systemd/system/multi-user.target.wants/%{name}.service
 /var/lib/dsme
 %config(noreplace) /var/lib/dsme/alarm_queue_status
+%dir /etc/profile.d
+/etc/profile.d/reboot-via-dsme.sh
 
 %files tests
 %defattr(-,root,root,-)

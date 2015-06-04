@@ -1,3 +1,62 @@
+dsme (0.71.0) precise; urgency=low
+
+  * [dsme] Make command line reboot go through dsme when applicable.
+    Fixes MER#1049
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Wed, 03 Jun 2015 10:49:31 +0300
+
+dsme (0.70.1) precise; urgency=low
+
+  * [dsme] Remove stale dsmetool --ta-test option. Fixes JB#28626
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Wed, 13 May 2015 11:34:28 +0300
+
+dsme (0.70.0) precise; urgency=low
+
+  * [dsme] Allow using config files to pass reboot parameters to systemd.
+    Contributes to JB#27085
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Tue, 12 May 2015 09:09:09 +0300
+
+dsme (0.69.1) precise; urgency=low
+
+  * [dsme] Attempt to re-enable thermal sensor if temperature read fails.
+    Fixes JB#28654
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Tue, 12 May 2015 08:16:46 +0300
+
+dsme (0.69.0) precise; urgency=low
+
+  * [dsme] Implement configurable generic thermal backend. Fixes JB#25904
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Wed, 06 May 2015 14:54:52 +0300
+
+dsme (0.68.3) precise; urgency=low
+
+  * [wlanloader] Only reset wlan module after wifi tethering has been turned
+    off. Contributes to JB#15005
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Tue, 28 Apr 2015 11:27:48 +0300
+
+dsme (0.68.2) precise; urgency=low
+
+  * [dsme] Disable shutdown by long power key press during os update.
+    Fixes JB#26767
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Tue, 03 Mar 2015 14:56:35 +0200
+
+dsme (0.68.1) precise; urgency=low
+
+  * [dsmetool] Refactor dsmetool sources. Fixes JB#26520
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Mon, 16 Feb 2015 11:04:50 +0200
+
+dsme (0.68.0) precise; urgency=low
+
+  * [dsmetool] Add device state query to dsmetool. Fixes JB#26463
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Sat, 14 Feb 2015 20:57:48 +0200
+
 dsme (0.67.4) precise; urgency=low
 
   * [usbtracker] Add more usb mode name configuration entries. Fixes JB#24839
