@@ -119,7 +119,6 @@ close_channel_and_fail:
   g_io_channel_shutdown(as_chan, FALSE, 0);
   g_io_channel_unref(as_chan);
   as_chan = 0;
-  goto fail;
 
 close_and_fail:
   close(fd);
