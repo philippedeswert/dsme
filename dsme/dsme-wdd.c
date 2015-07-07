@@ -130,8 +130,9 @@ static int daemonize(void)
 
     i = open("/dev/null", O_RDWR);
     i = open("/dev/console", O_RDWR);
-    if (dup(i) == -1) {
+    if (i > 0 && dup(i) == -1) {
         fprintf(stderr, ME "daemonize: dup failed: %s\n", strerror(errno));
+	close(i);
         return -1;
     }
 
