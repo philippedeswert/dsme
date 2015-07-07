@@ -78,6 +78,7 @@ time_t time(time_t *tloc)
       time_t (*realtime)(time_t *tloc) = dlsym(RTLD_NEXT, "time");
       if (dlerror()) {
           rval = (time_t)-1;
+	  goto out;
       }
       rval = realtime(tloc);
   } else {
@@ -86,7 +87,7 @@ time_t time(time_t *tloc)
       }
       rval = faketime;
   }
-
+out:
   return rval;
 }
 
