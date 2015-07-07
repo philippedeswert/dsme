@@ -46,10 +46,6 @@ if WANT_RUNLEVEL
 pkglib_LTLIBRARIES += runlevel.la
 endif
 
-if WANT_UPSTART
-pkglib_LTLIBRARIES += upstart.la
-endif
-
 if WANT_VALIDATOR_LISTENER
 pkglib_LTLIBRARIES += validatorlistener.la
 endif
@@ -97,12 +93,6 @@ endif
 
 if WANT_RUNLEVEL
 runlevel_la_SOURCES = runlevel.c
-endif
-
-if WANT_UPSTART
-upstart_la_SOURCES = upstart.c
-upstart_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS)
-upstart_la_LIBADD = $(DBUS_LIBS)
 endif
 
 if WANT_VALIDATOR_LISTENER

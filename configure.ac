@@ -40,17 +40,6 @@ AS_IF([test "x$enable_runlevel" != xno],
 AM_CONDITIONAL([WANT_RUNLEVEL], [test x$enable_runlevel != xno])
 
 #
-# upstart
-#
-AC_ARG_ENABLE([upstart],
-  [AS_HELP_STRING([--disable-upstart],
-    [disable upstart plugin (libupstart)])])
-
-AS_IF([test "x$enable_upstart" != xno],
-  [AC_DEFINE([DSME_WANT_LIBUPSTART], [1])])
-AM_CONDITIONAL([WANT_UPSTART], [test x$enable_upstart != xno])
-
-#
 # systemd
 #
 AC_ARG_ENABLE([systemd],
