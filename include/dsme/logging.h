@@ -38,7 +38,6 @@ extern "C" {
 /* Logging methods */
 typedef enum {
     LOG_METHOD_NONE,   /* Suppress all the messages */
-    LOG_METHOD_STI,    /* Serial trace interface */
     LOG_METHOD_STDOUT, /* Print messages to stdout */
     LOG_METHOD_STDERR, /* Print messages to stderr */
     LOG_METHOD_SYSLOG, /* Use syslog(3) */

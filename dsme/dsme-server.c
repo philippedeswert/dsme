@@ -78,7 +78,7 @@ static void usage(const char *  progname)
   fprintf(stderr, "Valid options:\n");
 #ifdef DSME_LOG_ENABLE
   fprintf(stderr, " -l  --logging     "
-                    "Logging type (syslog, sti, stderr, stdout, none)\n");
+                    "Logging type (syslog, stderr, stdout, none)\n");
   fprintf(stderr, " -v  --verbosity   Log verbosity (3..7)\n");
 #endif
 #ifdef DSME_SYSTEMD_ENABLE
@@ -149,7 +149,6 @@ static void parse_options(int      argc,           /* in  */
         {
           const char *log_method_name[] = {
               "none",   /* LOG_METHOD_NONE */
-              "sti",    /* LOG_METHOD_STI */
               "stdout", /* LOG_METHOD_STDOUT */
               "stderr", /* LOG_METHOD_STDERR */
               "syslog", /* LOG_METHOD_SYSLOG */
